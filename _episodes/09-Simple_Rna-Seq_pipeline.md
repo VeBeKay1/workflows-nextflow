@@ -106,6 +106,7 @@ reads: data/yeast/reads/ref1*_{1,2}.fq.gz
 ~~~
 {: .output }
 
+
 > ## Add a parameter
 > Modify the `script1.nf` adding a third parameter named `outdir` and set it to `results`. This parameter will be used as the pipeline output directory.
 > > ## Solution

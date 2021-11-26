@@ -226,7 +226,7 @@ script:
 
 exist status: $exit
 task status: $status
-task folder: $folder
+task folder: $workdir
 ~~~
 {: .language-markdown }
 
