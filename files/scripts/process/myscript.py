@@ -4,7 +4,7 @@
     reads = 0
     bases = 0
 
-    with gzip.open('${launchDir}/data/yeast/reads/ref1_1.fq.gz', 'rb') as read:
+    with gzip.open('/home/training/data/yeast/reads/ref1_1.fq.gz', 'rb') as read:
       for id in read:
           seq = next(read)
           reads += 1
