@@ -413,21 +413,22 @@ In the example below we will set the bash variable `KMERSIZE` to the value of `$
 //process_escape_bash.nf
 nextflow.enable.dsl=2
 
-process INDEX {
+process NUM_IDS {
 
   script:
   """
-  #set bash variable KMERSIZE
-  KMERSIZE=$params.kmer
-  salmon index -t $projectDir/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz -i index --kmer \$KMERSIZE
-  echo "kmer size is $params.kmer"
+  #set bash variable NUMIDS
+  NUMIDS=$(zgrep -c ">" $params.transcriptome)
+
+  echo "Number of sequences"
+  printf "%'d\n" $\NUMIDS
   """
 }
 
-params.kmer = 31
+params.transcriptome = "$projectDir/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz"
 
 workflow {
-  INDEX()
+  NUM_IDS()
 }
 ~~~
 {: .language-groovy }
@@ -447,19 +448,20 @@ nextflow.enable.dsl=2
 
 params.kmer = 31
 
-process INDEX {
+process NUM_BASES {
 
   shell:
   '''
-  #set bash variable KMERSIZE
-  KMERSIZE=!{params.kmer}
-  salmon index -t !{projectDir}/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz -i index --kmer ${KMERSIZE}
-  echo "kmer size is !{params.kmer}"
+  #set bash variable NUMLINES and NUMCHAR
+  NUMLINES=$(zgrep -v '>' data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz|wc -l)
+  NUMCHAR=$(zgrep -v '>' data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz|wc -m)
+  echo "Number bases "
+  echo NUMCHAR-NUMLINES|bc
   '''
 }
 
 workflow {
-  INDEX()
+  NUM_BASES()
 }
 ```
 {: .language-groovy }
