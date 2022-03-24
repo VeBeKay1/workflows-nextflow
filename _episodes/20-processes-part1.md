@@ -589,7 +589,7 @@ process PRINTCHR {
   """
 }
 
-chr_ch = Channel.of( 1..22, 'X', 'Y' )
+chr_ch = Channel.of( 'A', 'P' )
 
 workflow {
 
@@ -937,7 +937,7 @@ In this example the process is run three times.
 > Write a nextflow script `process_exercise_combine.nf` that combines two input channels
 > ~~~
 > transcriptome_ch = channel.fromPath('data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz')
-> kmer_ch = channel.of(21)
+> chr_ch = channel.of('A')
 > ~~~
 > {: .language-groovy }
 And include the command below in the script directive
@@ -945,7 +945,7 @@ And include the command below in the script directive
 > ~~~~
   script:
   """
-  salmon index -t $transcriptome -i index -k $kmer .
+  zgrep -c ">Y{chr}" ${transcriptome}
   """
 > ~~~~
 > {: .language-groovy }
@@ -956,11 +956,11 @@ And include the command below in the script directive
 > > process COMBINE {
 > >  input:
 > >  path transcriptome
-> >  val kmer
+> >  val chr
 > > 
 > >  script:
 > >  """
-> >  salmon index -t $transcriptome -i index -k $kmer
+> >  zgrep -c ">Y{chr}" ${transcriptome}
 > >  """
 > > }
 > >
@@ -968,7 +968,7 @@ And include the command below in the script directive
 > > kmer_ch = channel.of(21)
 > >
 > > workflow {
-> >   COMBINE(transcriptome_ch, kmer_ch)
+> >   COMBINE(transcriptome_ch, chr_ch)
 > > }
 > > ~~~
 > > {: .language-groovy }
