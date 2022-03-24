@@ -26,10 +26,10 @@ A `process` is the way Nextflow executes commands you would run on the command l
 
 A process can be thought of as a particular step in a workflow, e.g. an alignment step in RNA-seq analysis. Processes are independent of each other (don't require any another process to execute) and can not communicate/write to each other. Data is passed between processes via input and output Channels.
 
-For example, below is the command line you would run to count the number of sequence records in yeast transcriptome:
+For example, below is the command line you would run to create a index for the yeast transcriptome to be used with the [salmon](https://salmon.readthedocs.io/en/latest/salmon.html) aligner:
 
 ~~~
-$ zgrep -c ">" data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz 
+$ salmon index -t data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz -i data/yeast/salmon_index --kmerLen 31
 ~~~
 {: .language-bash }
 
@@ -40,10 +40,11 @@ Now we will show how to convert this into a simple Nextflow process.
 The process definition starts with keyword `process`, followed by process name, in this case `INDEX`, and finally the process `body` delimited by curly brackets `{}`. The process body must contain a string  which represents the command or, more generally, a script that is executed by it.
 
 ~~~
-process NUMSEQ {
+process INDEX {
   script:
-  "zgrep -c ${projectDir}/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz"
+  "salmon index -t ${projectDir}/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz -i ${projectDir}/data/yeast/salmon_index --kmerLen 31"
 }
+
 ~~~
 {: .language-groovy }
 
@@ -62,14 +63,14 @@ To add the process to a workflow add a `workflow` block, and call the process li
 //process_index.nf
 nextflow.enable.dsl=2
 
-process NUMSEQ {
+process INDEX {
   script:
-  "zgrep -c ${projectDir}/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz"
+  "salmon index -t ${projectDir}/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz -i data/yeast/salmon_index --kmerLen 31"
 }
 
 workflow {
   //process is called like a function in the workflow block
-  NUMSEQ()
+  INDEX()
 }
 ~~~
 {: .language-groovy }
@@ -77,7 +78,7 @@ workflow {
 We can now run the process:
 
 ~~~
-$ nextflow run process_index.nf -process.echo
+$ nextflow run process_index.nf
 ~~~
 {: .language-bash }
 
@@ -86,16 +87,15 @@ $ nextflow run process_index.nf -process.echo
 N E X T F L O W  ~  version 21.04.0
 Launching `process.nf` [lethal_hamilton] - revision: eff6186015
 executor >  local (1)
-[10/583af2] process > NUMSEQ [100%] 1 of 1 ✔
-6612
+[10/583af2] process > INDEX [100%] 1 of 1 ✔
 ~~~
 {: .language-bash }
 
 > ## A Simple Process
 >
-> Create a Nextflow script `simple_process.nf` that has one process `COUNT_BASES` that runs the command.
+> Create a Nextflow script `simple_process.nf` that has one process `SALMON_VERSION` that runs the command.
 > ~~~
-> zgrep -v ">" data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz|tr -d '\n'|wc -m
+> salmon --version
 > ~~~
 > {: .language-bash}
 >
@@ -103,16 +103,16 @@ executor >  local (1)
 > > ~~~
 > > nextflow.enable.dsl=2
 > >
-> > process COUNT_BASES {
+> > process SALMON_VERSION {
 > >    
 > >   script:
 > >   """
-> >   zgrep -v ">" data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz|tr -d '\n'|wc -m
+> >   salmon --version
 > >   """
 > > }
 > >
 > > workflow {
-> >   COUNT_BASES()
+> >   SALMON_VERSION()
 > > }
 > > ~~~
 > > {: .language-groovy }
@@ -125,8 +125,8 @@ executor >  local (1)
 > > N E X T F L O W  ~  version 21.04.0
 > > Launching `process.nf` [prickly_gilbert] - revision: 471a79c65c
 > > executor >  local (1)
-> > [56/5e6001] process > COUNT_BASES [100%] 1 of 1 ✔
-> > 8772368
+> > [56/5e6001] process > SALMON_VERSION [100%] 1 of 1 ✔
+> > salmon 1.5.2
 > > ~~~
 > {: .solution}
 {: .challenge}
@@ -174,13 +174,13 @@ The `script` block can be a simple one line string in quotes e.g.
 ~~~
 nextflow.enable.dsl=2
 
-process PROCESS_FASTA {
+process PROCESSBAM {
     script:
-    "grep ">" ${projectDir}/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz"|cut -f1 =d " "
+    "samtools sort -o ref1.sorted.bam ${projectDir}/data/yeast/bams/ref1.bam"
 }
 
 workflow {
-  PROCESS_FASTA()
+  PROCESSBAM()
 }
 ~~~
 {: .language-groovy }
@@ -193,17 +193,17 @@ For example:
 //process_multi_line.nf
 nextflow.enable.dsl=2
 
-process PROCESS_FASTA {
+process PROCESSBAM {
     script:
     """
-   "grep ">" ${projectDir}/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz|cut -f1 =d " " > ids.txt
-    grep -v "mRNA" -c ids.txt
-    grep "mRNA" -c ids.txt
+    samtools sort -o ref1.sorted.bam ${projectDir}/data/yeast/bams/ref1.bam
+    samtools index ref1.sorted.bam
+    samtools flagstat ref1.sorted.bam
     """
 }
 
 workflow {
-  PROCESS_FASTA()
+  PROCESSBAM()
 }
 ~~~
 {: .language-groovy }
@@ -302,19 +302,22 @@ A Nextflow variable can be used multiple times in the script block.
 //process_script.nf
 nextflow.enable.dsl=2
 
-chr = ">YA"
+kmer = 31
 
-process CHR_COUNT {
+process INDEX {
 
   script:
   """
-  printf "Number of sequences for chromosome ${chr} :"
-  zgrep -c $chr ${projectDir}/data/yeast/reads/ref1_1.fq.gz
+  salmon index \
+  -t $projectDir/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz \
+  -i index \
+  --kmer $kmer
+  echo "kmer size is $kmer"
   """
 }
 
 workflow {
-  CHR_COUNT()
+  INDEX()
 }
 ~~~
 {: .language-groovy }
@@ -326,27 +329,30 @@ In the example below we define the variable `params.kmer` with a default value o
 //process_script_params.nf
 nextflow.enable.dsl=2
 
-params.chr = ">YA"
+params.kmer = 31
 
-process CHR_COUNT {
+process INDEX {
 
   script:
   """
-  printf "Number of sequences for chromosome ${params.chr} :"
-  zgrep -c ${params.chr} ${projectDir}/data/yeast/reads/ref1_1.fq.gz
+  salmon index \
+  -t $projectDir/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz \
+  -i index \
+  --kmer $params.kmer
+  echo "kmer size is $params.kmer"
   """
 }
 
 workflow {
-  CHR_COUNT()
+  INDEX()
 }
 ~~~
 {: .language-groovy }
 
-Remember, we can change the default value of `chr` to `>YB` by running the Nextflow script using the command below. **Note:** parameters to the workflow have two hyphens `--`.
+Remember, we can change the default value of `kmer` to 11 by running the Nextflow script using the command below. **Note:** parameters to the workflow have two hyphens `--`.
 
 ~~~
-nextflow run process_script_params.nf --chr YB
+nextflow run process_script_params.nf --kmer 11
 ~~~
 {: .language-bash }
 
@@ -357,33 +363,34 @@ nextflow run process_script_params.nf --chr YB
 > ~~~
 > //process_script_params.nf
 > nextflow.enable.dsl=2
+> params.kmer = 31
 >
-> process COUNT_BASES {
+> process INDEX {
 >
 >  script:
 >  """
->  zgrep -v  ">"   data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz|grep -o A|wc -l   
+>  salmon index -t $projectDir/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz -i index --kmer $params.kmer
+>  echo "kmer size is" $params.kmer
 >  """
 > }
 >
 > workflow {
->   COUNT_BASES()
+>   INDEX()
 > }
 > ~~~
 > {: .language-groovy}
 >
-> Add a parameter params.base to the script and uses the varaiable ${param.chr} insides the script.
-> Run the pipeline using a base value of `C` using the `--base` command line option. 
+> Run the pipeline using a kmer value of `27` using the `--kmer` command line option. 
 >
 > ~~~
-> $ nextflow run process_script_params.nf --base <some value> -process.echo
+> $ nextflow run process_script_params.nf --kmer <some value> -process.echo
 > ~~~
 > {: .language-bash}
 > **Note:** The Nextflow option `-process.echo` will print the process' stdout to the terminal.
 >
 > > ## Solution
 > > ~~~
-> > nextflow run process_script_params.nf --base C -process.echo
+> > nextflow run process_script_params.nf --kmer 27 -process.echo
 > > ~~~
 > > {: .language-bash }
 > ~~~
@@ -495,27 +502,27 @@ For example, the Nextflow script below will use the `if` statement to change whi
 //process_conditional.nf
 nextflow.enable.dsl=2
 
-params.method = 'kallisto'
+params.aligner = 'kallisto'
 params.transcriptome = "$projectDir/data/yeast/transcriptome/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz"
 params.kmer = 31
 
 process INDEX {
   script:
-  if( params.method == 'ids' ) {
+  if( params.aligner == 'kallisto' ) {
     """
-    echo Number of sequences in transciptome
-    zgrep -c ">" $params.transcriptome
+    echo indexed using kallisto
+    kallisto index -i index -k $params.kmer $params.transcriptome
     """
   }  
-  else if( params.methods == 'bases' ) {
+  else if( params.aligner == 'salmon' ) {
     """
-   echo Number of bases in transciptome
-     zgrep -v ">" $params.transcriptome|grep -o "."|wc -l
+    echo indexed using salmon
+    salmon index -t $params.transcriptome -i index --kmer $params.kmer
     """
   }  
   else {
     """
-    echo Unknown method $params.method
+    echo Unknown aligner $params.aligner
     """
   }  
 }
