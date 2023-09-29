@@ -632,11 +632,11 @@ In the above example the process is executed 24 times; each time a value is rece
 
 ### Input files
 
-When you need to handle files as input you need the `path` qualifier. Using the `path` qualifier means that Nextflow will stage it in the process execution directory, and it can be accessed in the script by using the name specified in the input declaration.
+When you need to handle files as input, you need the `path` qualifier. Using the `path` qualifier means that Nextflow will stage it in the process execution directory, and it can be accessed in the script by using the name specified in the input declaration.
 
 The input file name can be defined dynamically by defining the input name as a Nextflow variable and referenced in the script using the  `$variable_name` syntax.
 
-For example in the script below we assign the variable name `read` to the input files using the `path` qualifier. The file is referenced using the variable substitution syntax `${read}` in the script block:
+For example, in the script below, we assign the variable name `read` to the input files using the `path` qualifier. The file is referenced using the variable substitution syntax `${read}` in the script block:
 
 ~~~
 //process_input_file.nf
@@ -684,7 +684,7 @@ ref1_2.fq.gz 58708
 {: .output }
 
 The input name can also be defined as user specified filename inside quotes.
-For example in the script below the name of the file is specified as `'sample.fq.gz'` in the input definition and can be referenced by that name in the script block.
+For example, in the script below the name of the file is specified as `'sample.fq.gz'` in the input definition and can be referenced by that name in the script block.
 
 ~~~
 //process_input_file_02.nf
@@ -986,9 +986,9 @@ And include the command below in the script directive
 
 # Input repeaters
 
-We saw previously that by default the number of times a process runs is defined by the queue channel with the fewest items. However, the `each` qualifier allows you to repeat the execution of a process for each item in a list or a queue channel, every time new data is received.
+We saw previously that, by default, the number of times a process runs is defined by the queue channel with the fewest items. However, the `each` qualifier allows you to repeat the execution of a process for each item in a list or a queue channel, every time new data is received.
 
-For example if we can fix the previous example by using the input qualifer `each` for the letters queue channel:
+For example, we can fix the previous example by using the input qualifer `each` for the letters queue channel:
 
 ~~~
 //process_repeat.nf
